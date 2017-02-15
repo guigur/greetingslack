@@ -14,24 +14,23 @@ try:
 	MESSAGE = os.environ['WELCOME-MESSAGE'] 
 	TOKEN = os.environ['SLACK-TOKEN']
 except:
-	MESSAGE = 'Manually set the Message if youre not running through heroku or have not set vars in ENV'
-	TOKEN = 'Manually set the API Token if youre not running through heroku or have not set vars in ENV'
+	MESSAGE = 'salut'
+	TOKEN = 'le tocken'
 ###############################################################
 
 def parse_join(message):
     m = json.loads(message)
-    if (m['type'] == "team_join"):
-        x = requests.get("https://slack.com/api/im.open?token="+TOKEN+"&user="+m["user"]["id"])
-        x = x.json()
-        x = x["channel"]["id"]
-        xx = requests.post("https://slack.com/api/chat.postMessage?token="+TOKEN+"&channel="+x+"&text="+urllib.quote(MESSAGE)+"&parse=full&as_user=true")
+    if (m['type'] == "message"):
+        
+        k = requests.get("https://slack.com/api/users.info?token="+TOKEN+"&user="+m["user"])
+        k = k.json()
+        print  '\033[92m' + k['user']['profile']['email'] + '\033[0m'
+        requests.post("https://slack.com/api/chat.postMessage?token="+TOKEN+"&channel=mmmmm&text="+urllib.quote("lol")+"&parse=full&as_user=true")
 
-        #DEBUG
-        #print '\033[91m' + "HELLO SENT" + m["user"]["id"] + '\033[0m'
-        #
 
 #Connects to Slacks and initiates socket handshake        
 def start_rtm():
+    print "https://slack.com/api/rtm.start?token=" + TOKEN
     r = requests.get("https://slack.com/api/rtm.start?token="+TOKEN, verify=False)
     r = r.json()
     r = r["url"]
