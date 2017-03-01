@@ -1,9 +1,11 @@
 import websocket
 import json
 import requests
+import Cookie
+import ConfigParser
 import urllib
 import os
-
+import logging
 
 # Suppress InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -11,22 +13,49 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 ###VARIABLES THAT YOU NEED TO SET MANUALLY IF NOT ON HEROKU#####
 try:
-	MESSAGE = os.environ['WELCOME-MESSAGE'] 
 	TOKEN = os.environ['SLACK-TOKEN']
+    CHANNEL = os.environ['SLACK-CHANNEL']
 except:
-	MESSAGE = 'salut'
-	TOKEN = 'le tocken'
-###############################################################
+	TOKEN = 'token'
+    CHANNEL = "mmmmm"
 
+###############################################################
+def epiLogin(loginToGetInfos):
+    totgroup = ""
+    Config = ConfigParser.ConfigParser()
+    Config.read("config.txt")
+    login = Config.get('Epitech', 'login')
+    password = Config.get('Epitech', 'password')
+    s = requests.Session()
+    auth = s.post('https://intra.epitech.eu/', data = {'format':'json','login':login,'password':password, 'remember_me':'on'})
+    infos = getInfo(s, loginToGetInfos)
+    groups = infos['groups']
+    for group in groups:
+        if totgroup != "":
+            totgroup = totgroup + ", "
+        totgroup = totgroup + group['title']
+    print totgroup
+    message = "Bienvenue " + infos['title'].title() + "\r" + "https://intra.epitech.eu/user/" + urllib.quote(loginToGetInfos) + "\rpromo : " + str(infos['promo']) + "\rgroupes :  " + totgroup
+    #print infos
+    requests.post("https://slack.com/api/chat.postMessage?token="+TOKEN+"&channel="+CHANNEL+"&text="+message+"&parse=full&as_user=true")
+
+def getInfo(s, loginToGetInfos):
+    print "t"
+    r = s.post('https://intra.epitech.eu/user/'+loginToGetInfos+'?format=json')
+    print r.content
+    r = r.json()
+    return r
+	
 def parse_join(message):
     m = json.loads(message)
-    if (m['type'] == "message"):
-        
+    if (m['type'] == "message"):   
         k = requests.get("https://slack.com/api/users.info?token="+TOKEN+"&user="+m["user"])
         k = k.json()
-        print  '\033[92m' + k['user']['profile']['email'] + '\033[0m'
-        requests.post("https://slack.com/api/chat.postMessage?token="+TOKEN+"&channel=mmmmm&text="+urllib.quote("lol")+"&parse=full&as_user=true")
-
+        loginToGetInfos = k['user']['profile']['email']
+        print  '\033[92m' + loginToGetInfos + '\033[0m'
+        splittedemail = loginToGetInfos.split('@')
+        if splittedemail[1] == 'epitech.eu':
+            epiLogin(loginToGetInfos)
 
 #Connects to Slacks and initiates socket handshake        
 def start_rtm():
@@ -48,9 +77,8 @@ def on_close(ws):
 def on_open(ws):
     print "Connection Started - Auto Greeting new joiners to the network"
 
-
-if __name__ == "__main__":
-    r = start_rtm()
-    ws = websocket.WebSocketApp(r, on_message = on_message, on_error = on_error, on_close = on_close)
-    #ws.on_open
-    ws.run_forever()
+logging.basicConfig()
+r = start_rtm()
+ws = websocket.WebSocketApp(r, on_message = on_message)
+#ws.on_open
+ws.run_forever()
