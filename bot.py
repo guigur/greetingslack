@@ -13,11 +13,11 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 ###VARIABLES THAT YOU NEED TO SET MANUALLY IF NOT ON HEROKU#####
 try:
-	TOKEN = os.environ['SLACK-TOKEN']
+    TOKEN = os.environ['SLACK-TOKEN']
     CHANNEL = os.environ['SLACK-CHANNEL']
 except:
-	TOKEN = 'token'
-    CHANNEL = "mmmmm"
+    TOKEN = 'token'
+    CHANNEL = 'general'
 
 ###############################################################
 def epiLogin(loginToGetInfos):
@@ -36,11 +36,9 @@ def epiLogin(loginToGetInfos):
         totgroup = totgroup + group['title']
     print totgroup
     message = "Bienvenue " + infos['title'].title() + "\r" + "https://intra.epitech.eu/user/" + urllib.quote(loginToGetInfos) + "\rpromo : " + str(infos['promo']) + "\rgroupes :  " + totgroup
-    #print infos
     requests.post("https://slack.com/api/chat.postMessage?token="+TOKEN+"&channel="+CHANNEL+"&text="+message+"&parse=full&as_user=true")
 
 def getInfo(s, loginToGetInfos):
-    print "t"
     r = s.post('https://intra.epitech.eu/user/'+loginToGetInfos+'?format=json')
     print r.content
     r = r.json()
